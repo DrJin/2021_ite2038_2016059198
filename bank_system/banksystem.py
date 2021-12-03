@@ -1,5 +1,6 @@
 import pymysql as pms
 import traceback
+import pandas as pd
 
 connection = pms.connect(
 	host = "localhost",
@@ -39,7 +40,7 @@ def get_tuple(cursor, table_name,ignore):
             tuple.append(input())
     return tuple
 
-
+''' #우씨 그냥 Dataframe 쓸껄...
 def print_log(logs, s, format):
     print("------log start--------")
     print(format % s)
@@ -53,7 +54,7 @@ def print_log(logs, s, format):
                 print(str(l), end='\t')
         print("")
     print("------log end--------")
-
+'''
 
 
 def user():
@@ -78,7 +79,8 @@ def user():
                 for _ in range(n):
                     print("input phone number : ", end='')
                     phones.append([u_id, input()])
-                cursor.executemany("INSERT INTO user_phone VALUES (%s, %s)", phones)
+                if not phones:
+                    cursor.executemany("INSERT INTO user_phone VALUES (%s, %s)", phones)
                 connection.commit()
 
             # Make New Account
@@ -263,6 +265,8 @@ def user():
             elif s2 == '4':
                 print("1. lookup balance\n2. lookup transaction log\n3. lookup transfer log\n...Other for go back...")
                 s3 = input()
+
+                #lookup balance
                 if s3 == '1':
                     print("input account_number & password : ",end='')
                     cursor.execute('''SELECT balance from account
@@ -275,6 +279,7 @@ def user():
                         balance = balance[0]
                         print(f"--------------------------\nYour balance is {balance}\n--------------------------")
 
+                #lookup transaction log
                 elif s3 == '2':
                     print("input account_number & password : ", end='')
                     cursor.execute('''SELECT acc_number from account
@@ -290,16 +295,22 @@ def user():
                     limit = int(input())
                     print("input 1 for show all, 2 for show only success, 3 for show only failed : ",end='')
                     case = {'1':('SUCCESS','FAILED'), '2':('SUCCESS',), '3':('FAILED',)}[input()]
-                    cursor.execute('''SELECT acc_number, branch_name, price, result, date
+                    dict_cursor = connection.cursor(pms.cursors.DictCursor)
+                    dict_cursor.execute('''SELECT acc_number, branch_name, price, result, date
                                     from transaction
                                     natural join bank
                                     where acc_number = %s
                                     and result in %s
                                     LIMIT %s''',[acc_number,case,limit])
-                    print_log(cursor.fetchall(),
-                              ('#','acc_number','branch_name','price','result','date'),
-                              '%-2s%-36s%-15s%-10s%-7s%s')
+                    #print_log(cursor.fetchall(),
+                    #          ('#','acc_number','branch_name','price','result','date'),
+                    #          '%-2s%-36s%-15s%-10s%-7s%s')
+                    pd.set_option('display.max_rows', 50)
+                    pd.set_option('display.max_columns', 12)
+                    print(pd.DataFrame(dict_cursor.fetchall()))
 
+
+                #lookup transfer log
                 elif s3 == '3':
                     print("input account_number & password : ", end='')
                     cursor.execute('''SELECT acc_number from account
@@ -315,14 +326,15 @@ def user():
                     limit = int(input())
                     print("input 1 for show all, 2 for show only success, 3 for show only failed : ", end='')
                     case = {'1': ('SUCCESS', 'FAILED'), '2': ('SUCCESS',), '3': ('FAILED',)}[input()]
-                    cursor.execute('''SELECT acc_number_from, acc_number_to, price, result, date
+                    dict_cursor = connection.cursor(pms.cursors.DictCursor)
+                    dict_cursor.execute('''SELECT acc_number_from, acc_number_to, price, result, date
                                                         from transfer
                                                         where (acc_number_from = %s or acc_number_to = %s)
                                                         and result in %s
                                                         LIMIT %s''', [acc_number, acc_number, case, limit])
-                    print_log(cursor.fetchall(),
-                              ('#', 'acc_number_from', 'acc_number_to', 'price', 'result', 'date'),
-                              '%-2s%-36s%-36s%-10s%-7s%s')
+                    pd.set_option('display.max_rows', 50)
+                    pd.set_option('display.max_columns', 12)
+                    print(pd.DataFrame(dict_cursor.fetchall()))
                 else:
                     continue
             else:
@@ -336,20 +348,18 @@ def user():
 
 
 def manager():
+    manager = None
     while True:
 
-        ####### 나중에 반드시 주석 해제할 것!!!!!!!!!!!!!!
-        '''
-        print("input your Ssn")
-        cursor.execute("SELECT name from manager where manager_ssn=%s", input())
-        m_name = cursor.fetchone()
-        if m_name == None:
-            raise Exception("Error! you're not Manager!")
-        else:
-            m_name = m_name[0]
+        if not manager:
+            print("input your Ssn")
+            cursor.execute("SELECT manager_id, name from manager where manager_ssn=%s", input())
+            manager = cursor.fetchone()
+            if manager == None:
+                raise Exception("Error! you're not Manager!")
 
-        print(f"Hi, {m_name} manager!")
-        '''
+            print(f"Hi, {manager[1]} manager!")
+
         print("1. Make New...\n2. Delete...\n3. Managing...\n...Other for go back...")
         s1 = input()
         if s1 == '1':
@@ -377,7 +387,8 @@ def manager():
                 for _ in range(n):
                     print("input phone number : ", end='')
                     phones.append([m_id, input()])
-                cursor.executemany("INSERT INTO manager_phone VALUES (%s, %s)", phones)
+                if not phones:
+                    cursor.executemany("INSERT INTO manager_phone VALUES (%s, %s)", phones)
 
                 print("which bank do you work on? (input bank_code & branch_name) : ", end='')
                 cursor.execute('''INSERT INTO bank_on values
@@ -408,15 +419,80 @@ def manager():
                 continue
             print("Delete Complete!")
         elif s1 == '3':
-            print("1. Managing Accounts\n2. Lookup transaction Logs\n3. Lookup Transfer Logs\n4. Lookup Managing Logs\n...Other for go back...")
+            print("1. Managing Accounts validity\n2. Describe User Accounts\n...Other for go back...")
+            managing_account = [manager[0]]
             s2 = input()
+
+            #Changing Validity
             if s2 == '1':
-                pass
+                print("input account_number of account you want to manage : ",end='')
+                acc_number = input()
+                managing_account.append(acc_number)
+                managing_account.append("validity change")
+                cursor.execute("SELECT validity from account where acc_number=%s",acc_number)
+                validity = cursor.fetchone()
+                if validity == None:
+                    managing_account.append("FAILED")
+                    cursor.execute('''INSERT INTO managing_account
+                                    (manager_id, acc_number, command, result) values
+                                    ''', managing_account)
+                    connection.commit()
+                    raise Exception("Error! Wrong Account Number!")
+                else:
+                    validity = validity[0]
+                print(f"Now this Account's validity is {validity}, do you want to change?(y/n) : ",end='')
+                result = cursor.execute("UPDATE account set validity=%s where acc_number=%s",
+                               ({'y':int(not validity), 'n':validity}[input()],acc_number))
+                if result == 0:
+                    managing_account.append("NOTHING")
+                else:
+                    managing_account.append("SUCCESS")
+                #print(managing_account)
+                cursor.execute('''INSERT INTO managing_account
+                                (manager_id, acc_number, command, result) values
+                                (%s, %s, %s, %s)''', managing_account)
+
+                connection.commit()
+
+            #Describe by User
             elif s2 == '2':
-                pass
+                dict_cursor = connection.cursor(pms.cursors.DictCursor)
+                sql = '''
+                SELECT U.name, UP.phone_number, U.credit,
+                A.acc_number, A.acc_type, A.balance, A.acc_date, A.validity,
+                TRCSF.success AS transaction_success, TRCSF.failed AS transaction_failed,
+                TRFSF.success AS transfer_success, TRFSF.failed AS transfer_failed
+                FROM `user` as U
+                NATURAL JOIN user_phone AS UP
+                LEFT JOIN `account` AS A
+                ON U.u_id = A.u_id
+                LEFT JOIN
+                    (SELECT TRC.acc_number, 
+					    COUNT(if(TRC.result='SUCCESS',1,NULL)) AS success,
+					    COUNT(if(TRC.result='FAILED',1,NULL)) AS failed
+					    FROM `transaction` AS TRC, `account` AS A
+					    WHERE TRC.acc_number = A.acc_number
+					    GROUP BY TRC.acc_number) AS TRCSF
+			    ON TRCSF.acc_number = A.acc_number
+                LEFT JOIN
+                    (SELECT TRF.acc_number_from,
+					    COUNT(if(TRF.result='SUCCESS',1,NULL)) AS success,
+					    COUNT(if(TRF.result='FAILED',1,NULL)) AS failed
+					    FROM `transfer` AS TRF, `account` AS A
+					    WHERE TRF.acc_number_from = A.acc_number
+					    GROUP BY TRF.acc_number_from) AS TRFSF
+			    ON TRFSF.acc_number_from = A.acc_number
+			    GROUP BY U.u_id, A.acc_number
+                ORDER BY U.u_id
+                '''
+                dict_cursor.execute(sql)
+                pd.set_option('display.max_rows', 50)
+                pd.set_option('display.max_columns', 12)
+                print(pd.DataFrame(dict_cursor.fetchall()))
+
             else:
                 continue
-            pass
+
         else:
             break
     
@@ -437,6 +513,11 @@ def main(): #main
                 connection.rollback()
         elif s == '2':
             try:
+                result = cursor.execute("SELECT * from manager")
+                if result == 0:
+                    print("make root manager...")
+                    cursor.execute("INSERT INTO manager(manager_ssn, name, birth_date) values('root','root','1900-01-01')")
+                    connection.commit()
                 manager()
             except Exception as e:
                 print("Error", e.args)

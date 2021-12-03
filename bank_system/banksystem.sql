@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS `manager` (
   `birth_date` date DEFAULT NULL,
   PRIMARY KEY (`manager_id`),
   UNIQUE KEY `manager_ssn` (`manager_ssn`)
-) ENGINE=InnoDB AUTO_INCREMENT=1004 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1005 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- 내보낼 데이터가 선택되어 있지 않습니다.
 
@@ -128,14 +128,14 @@ CREATE TABLE IF NOT EXISTS `managing_account` (
   `manager_id` int DEFAULT NULL,
   `acc_number` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `command` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `result` char(10) DEFAULT NULL,
+  `result` char(7) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `date` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`managing_id`),
   KEY `FK_mac_acc_number` (`acc_number`),
   KEY `FK_mac_manager` (`manager_id`),
   CONSTRAINT `FK_mac_acc_number` FOREIGN KEY (`acc_number`) REFERENCES `account` (`acc_number`) ON DELETE SET NULL ON UPDATE SET NULL,
   CONSTRAINT `FK_mac_manager` FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`) ON DELETE SET NULL ON UPDATE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- 내보낼 데이터가 선택되어 있지 않습니다.
 

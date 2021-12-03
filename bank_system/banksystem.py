@@ -507,7 +507,7 @@ def main(): #main
                 user()
             except Exception as e:
                 print("Error", e.args)
-                traceback.print_exc() #나중에 주석 해제할 것!
+                #traceback.print_exc() #나중에 주석 해제할 것!
                 continue
             finally:
                 connection.rollback()
@@ -521,7 +521,7 @@ def main(): #main
                 manager()
             except Exception as e:
                 print("Error", e.args)
-                traceback.print_exc() #나중에 주석 해제할 것!
+                #traceback.print_exc() #나중에 주석 해제할 것!
                 continue
             finally:
                 connection.rollback()

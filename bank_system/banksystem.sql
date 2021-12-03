@@ -74,32 +74,6 @@ BEGIN
 END//
 DELIMITER ;
 
--- 테이블 banksystem.joint 구조 내보내기
-CREATE TABLE IF NOT EXISTS `joint` (
-  `joint_name` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `u_id` int NOT NULL,
-  `foundation_date` date DEFAULT NULL,
-  PRIMARY KEY (`joint_name`,`u_id`),
-  KEY `FK_us_joint` (`u_id`),
-  CONSTRAINT `FK_us_joint` FOREIGN KEY (`u_id`) REFERENCES `user` (`u_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- 내보낼 데이터가 선택되어 있지 않습니다.
-
--- 테이블 banksystem.joint_member 구조 내보내기
-CREATE TABLE IF NOT EXISTS `joint_member` (
-  `joint_name` varchar(30) NOT NULL,
-  `joint_master_id` int NOT NULL,
-  `member_id` int NOT NULL,
-  `joint_date` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`joint_name`,`joint_master_id`,`member_id`),
-  KEY `FK_jm_user` (`member_id`),
-  CONSTRAINT `FK_jm_joint` FOREIGN KEY (`joint_name`, `joint_master_id`) REFERENCES `joint` (`joint_name`, `u_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `FK_jm_user` FOREIGN KEY (`member_id`) REFERENCES `user` (`u_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- 내보낼 데이터가 선택되어 있지 않습니다.
-
 -- 테이블 banksystem.manager 구조 내보내기
 CREATE TABLE IF NOT EXISTS `manager` (
   `manager_id` int NOT NULL AUTO_INCREMENT,
